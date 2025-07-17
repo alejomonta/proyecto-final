@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GEOPORTAL</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+  h1 {
+    text-align: center;
+  }
+  .filter-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+  }
+  label {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  select {
+    padding: 5px;
+    min-width: 200px;
+  }
+  #results {
+    margin-top: 20px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+  }
+  th {
+    background-color: #f4f4f4;
+  }
+</style>
+</head>
+<body>
+
+<h1>GEOPORTAL</h1>
+
+<div class="filter-section">
+  <div class="filter-group">
+    <label for="peligroCritico">Peligro Crítico</label>
+    <select id="peligroCritico">
+      <option value="">Todos</option>
+      <option value="1">Sí</option>
+      <option value="0">No</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label for="area">Área</label>
+    <select id="area">
+      <option value="">Todos</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label for="perimetro">Perímetro</label>
+    <select id="perimetro">
+      <option value="">Todos</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label for="volcan">Volcán</label>
+    <select id="volcan">
+      <option value="">Todos</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label for="provincia">Provincia</label>
+    <select id="provincia">
+      <option value="">Todos</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label for="cantones">Cantón</label>
+    <select id="cantones">
+      <option value="">Todos</option>
+    </select>
+  </div>
+</div>
+
+<button onclick="filtrar()">Buscar</button>
+
+<div id="results">
+  <!-- Aquí se mostrarán los resultados -->
+</div>
+
+<script>
+  // Datos simulados de las tablas
+  const datos = {
+    peligro_critico: [
+      {identificacion: 1, geom: '...', AREA: 12.5, PERIMETRO: 20.0, FLL_: 8, 'Identificación completa': '...', TEXTO DXF: '...', DESCRIP: '...', VOLCÁN: 'Misti'},
+      {identificacion: 2, geom: '...', AREA: 15.0, PERIMETRO: 25.0, FLL_: 8, 'Identificación completa': '...', TEXTO DXF: '...', DESCRIP: '...', VOLCÁN: 'Ubinas'}
+    ],
+    áreas_protegidas: [
+      {identificación: 101, geom: '...', NOMBRE: 'Parque Nacional XYZ'},
+      {identificación: 102, geom: '...', NOMBRE: 'Reserva ABC'}
+    ],
+    bosques_protegidos: [
+      {identificación: 201, geom: '...', NOMBRE: 'Bosque 1'},
+      {identificación: 202, geom: '...', NOMBRE: 'Bosque 2'}
+    ],
+    centros_poblados: [
+      {identificación: 301, geom: '...', NOMBRE: 'Ciudad A'},
+      {identificación: 302, geom: '...', NOMBRE: 'Pueblo B'}
+    ],
+    coberturas_uso_suelo: [
+      {identificación: 401, geom: '...', USO: 'Agrícola'},
+      {identificación: 402, geom: '...', USO: 'Urbano'}
+    ],
+    cuencas_hidrograficas: [
+      {identificación: 501, geom: '...', PRIMERA_HERMANA: 'A', PRIMERA_HERMANA_1: 'B', PRIMERA_CUENTA: 'X', CUENCA: 'Y'},
+      {identificación: 502, geom: '...', PRIMERA_HERMANA: 'C', PRIMERA_HERMANA_1: 'D', PRIMERA_CUENTA: 'Z', CUENCA: 'W'}
+    ],
+    provincias: [
+      {identificación: 601, geom: '...', CÓDIGO: '01', NOMBRE: 'Provincia1', Región: 'Región1'},
+      {identificación: 602, geom: '...', CÓDIGO: '02', NOMBRE: 'Provincia2', Región: 'Región2'}
+    ],
+    cantones: [
+      {identificación: 701, geom: '...', NOMBRE: 'Canton1', PROVINCIA: 'Provincia1', CÓDIGO: '001', Región: 'Región1'},
+      {identificación: 702, geom: '...', NOMBRE: 'Canton2', PROVINCIA: 'Provincia2', CÓDIGO: '002', Región: 'Región2'}
+    ],
+    parroquias: [
+      {identificación: 801, geom: '...', NOMBRE: 'Parroquia1', CÓDIGO: 'P001', Cantón: 'Canton1', PROVINCIA: 'Provincia1'},
+      {identificación: 802, geom: '...', NOMBRE: 'Parroquia2', CÓDIGO: 'P002', Cantón: 'Canton2', PROVINCIA: 'Provincia2'}
+    ]
+  };
+
+  // Poblamos los selectores con datos
+  function cargarSelectores() {
+    // Por ejemplo, cargar provincias
+    const provincias = datos.provincias;
+    const selectProvincia = document.getElementById('provincia');
+    provincias.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p.NOMBRE;
+      option.textContent = p.NOMBRE;
+      selectProvincia.appendChild(option);
+    });
+    // Cargar cantones
+    const cantones = datos.cantones;
+    const selectCanton = document.getElementById('cantones');
+    cantones.forEach(c => {
+      const option = document.createElement('option');
+      option.value = c.NOMBRE;
+      option.textContent = c.NOMBRE;
+      selectCanton.appendChild(option);
+    });
+  }
+
+  // Función para filtrar datos
+  function filtrar() {
+    const filtroPeligro = document.getElementById('peligroCritico').value;
+    const filtroArea = document.getElementById('area').value;
+    const filtroPerimetro = document.getElementById('perimetro').value;
+    const filtroVolcan = document.getElementById('volcan').value;
+    const filtroProvincia = document.getElementById('provincia').value;
+    const filtroCanton = document.getElementById('cantones').value;
+
+    // Aquí debes definir qué tabla quieres filtrar o hacer filtros combinados
+    // Por ejemplo, filtramos peligros críticos
+    let resultados = datos.peligro_critico.filter(item => {
+      return (filtroPeligro === '' || (filtroPeligro === '1' && item['peligro_critico'] === 1) || (filtroPeligro === '0' && item['peligro_critico'] === 0))
+      && (filtroArea === '' || item['AREA'].toString() === filtroArea)
+      && (filtroPerimetro === '' || item['PERIMETRO'].toString() === filtroPerimetro)
+      && (filtroVolcan === '' || item['VOLCÁN'] === filtroVolcan);
+    });
+
+    mostrarResultados(resultado);
+  }
+
+  function mostrarResultados(resultado) {
+    const divResultados = document.getElementById('results');
+    divResultados.innerHTML = '';
+
+    if (resultado.length === 0) {
+      divResultados.innerHTML = '<p>No hay resultados</p>';
+      return;
+    }
+
+    const table = document.createElement('table');
+    const header = document.createElement('tr');
+    // Agregar cabeceras según los datos
+    for (const key in resultado[0]) {
+      const th = document.createElement('th');
+      th.textContent = key;
+      header.appendChild(th);
+    }
+    table.appendChild(header);
+
+    // Agregar filas
+    resultado.forEach(item => {
+      const fila = document.createElement('tr');
+      for (const key in item) {
+        const td = document.createElement('td');
+        td.textContent = item[key];
+        fila.appendChild(td);
+      }
+      table.appendChild(fila);
+    });
+
+    divResultados.appendChild(table);
+  }
+
+  // Cargar selectores al cargar la página
+  window.onload = () => {
+    cargarSelectores();
+  };
+</script>
+
+</body>
+</html>
